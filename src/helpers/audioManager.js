@@ -37,6 +37,7 @@ import {
   isSelfHostedTranscription,
   resolveSelfHostedTranscriptionModel,
 } from "./selfHostedTranscription";
+import { processVerbatimTranscript } from "./verbatimProcessing";
 import { resolveStreamingFallbackTarget } from "./transcriptionFallback";
 import {
   executeTranslationChain,
@@ -1826,6 +1827,15 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
       return normalizedText;
     }
 
+    const settings = getSettings();
+    if (settings.transcriptionProcessingMode === "verbatim") {
+      logger.logReasoning("REASONING_SKIPPED_VERBATIM_MODE", {
+        source,
+        reason: "Verbatim mode is active — bypassing all AI and filtering",
+      });
+      return processVerbatimTranscript(text);
+    }
+
     if (this.skipReasoning) {
       logger.logReasoning("REASONING_SKIPPED_AGENT_MODE", {
         source,
@@ -1843,7 +1853,7 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
 
     const cleanupModel = getEffectiveCleanupModel();
     const isCloud = isCloudCleanupMode();
-    const settings = getSettings();
+
     const cleanupProvider = settings.cleanupProvider || "auto";
     const cleanupReachable = !!settings.useCleanupModel && (!!cleanupModel || isCloud);
     const agentReachable = dictationAgentReachable(settings);

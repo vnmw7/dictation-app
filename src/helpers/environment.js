@@ -57,6 +57,7 @@ const PERSISTED_KEYS = [
   "AZURE_OPENAI_API_VERSION",
   "VERTEX_PROJECT",
   "VERTEX_LOCATION",
+  "TRANSCRIPTION_PROCESSING_MODE",
 ];
 
 // Module-level so writes are serialized across all instances — hotkeyManager
@@ -429,6 +430,16 @@ class EnvironmentManager {
 
   saveTranslationKey(key) {
     const result = this._saveKey("TRANSLATION_KEY", key);
+    this.saveAllKeysToEnvFile().catch(() => {});
+    return result;
+  }
+
+  getTranscriptionProcessingMode() {
+    return this._getKey("TRANSCRIPTION_PROCESSING_MODE") || "standard";
+  }
+
+  saveTranscriptionProcessingMode(mode) {
+    const result = this._saveKey("TRANSCRIPTION_PROCESSING_MODE", mode);
     this.saveAllKeysToEnvFile().catch(() => {});
     return result;
   }

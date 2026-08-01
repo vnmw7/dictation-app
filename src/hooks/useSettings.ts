@@ -20,6 +20,7 @@ export interface TranscriptionSettings {
   cloudTranscriptionBaseUrl?: string;
   cloudTranscriptionMode: string;
   transcriptionMode: InferenceMode;
+  transcriptionProcessingMode: import("../types/electron").TranscriptionProcessingMode | "standard";
   remoteTranscriptionType: SelfHostedType;
   remoteTranscriptionUrl: string;
   remoteTranscriptionModel: string;

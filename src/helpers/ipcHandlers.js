@@ -1044,6 +1044,13 @@ class IPCHandlers {
       ipcMain.handle(`save-${k.base}-key`, (event, key) => this.environmentManager[k.save](key));
     }
 
+    ipcMain.handle("get-transcription-processing-mode", () =>
+      this.environmentManager.getTranscriptionProcessingMode()
+    );
+    ipcMain.handle("save-transcription-processing-mode", (event, mode) =>
+      this.environmentManager.saveTranscriptionProcessingMode(mode)
+    );
+
     ipcMain.handle("db-save-transcription", async (event, text, rawText, options) => {
       const result = this.databaseManager.saveTranscription(text, rawText, options);
       if (result?.success && result?.transcription) {
@@ -4584,6 +4591,9 @@ class IPCHandlers {
     });
 
     ipcMain.handle("cloud-transcribe", async (event, audioBuffer, opts = {}) => {
+      if (this.environmentManager?.getTranscriptionProcessingMode() === "verbatim") {
+        return { success: false, error: "Cloud transcription is disabled in verbatim mode" };
+      }
       try {
         const apiUrl = getApiUrl();
         if (!apiUrl) throw new Error("OpenWhispr API URL not configured");
@@ -7166,6 +7176,9 @@ class IPCHandlers {
     });
 
     ipcMain.handle("cloud-reason", async (event, text, opts = {}) => {
+      if (this.environmentManager?.getTranscriptionProcessingMode() === "verbatim") {
+        return { success: false, error: "Cloud reasoning is disabled in verbatim mode" };
+      }
       try {
         const apiUrl = getApiUrl();
         if (!apiUrl) throw new Error("OpenWhispr API URL not configured");
@@ -7253,6 +7266,10 @@ class IPCHandlers {
     });
 
     ipcMain.on("cloud-agent-stream-start", async (event, messages, opts = {}) => {
+      if (this.environmentManager?.getTranscriptionProcessingMode() === "verbatim") {
+        event.sender.send("cloud-agent-stream-error", { error: "Agent is disabled in verbatim mode", code: "DISABLED" });
+        return;
+      }
       try {
         const apiUrl = getApiUrl();
         if (!apiUrl) throw new Error("OpenWhispr API URL not configured");
@@ -7576,7 +7593,12 @@ class IPCHandlers {
       }
     });
 
-    ipcMain.handle("cloud-api-request", (_event, opts) => handleCloudApiRequest(opts));
+    ipcMain.handle("cloud-api-request", (_event, opts) => {
+      if (this.environmentManager?.getTranscriptionProcessingMode() === "verbatim") {
+        throw new Error("Cloud API requests are disabled in verbatim mode");
+      }
+      return handleCloudApiRequest(opts);
+    });
 
     ipcMain.handle("get-stt-config", async (event) => {
       try {
