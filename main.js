@@ -1747,6 +1747,17 @@ if (gotSingleInstanceLock) {
       }
     }
   });
+  app.on("web-contents-created", (_event, contents) => {
+    contents.on("before-input-event", (event, input) => {
+      if (input.key === "F12" && input.type === "keyDown" && process.env.NODE_ENV === "development") {
+        if (contents.isDevToolsOpened()) {
+          contents.closeDevTools();
+        } else {
+          contents.openDevTools({ mode: "detach" });
+        }
+      }
+    });
+  });
 
   let isShuttingDown = false;
   app.on("before-quit", (event) => {
