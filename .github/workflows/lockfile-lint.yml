@@ -1,7 +1,10 @@
 name: Lockfile Lint
 
 on:
-  pull_request:
+  # Automatic triggers temporarily disabled to conserve GitHub Actions minutes.
+  # Restore by uncommenting the line below.
+  # pull_request:
+  workflow_dispatch:
 
 jobs:
   lockfile-lint:

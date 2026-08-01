@@ -1,14 +1,16 @@
 name: Build Meeting AEC Helper
 
 on:
-  push:
-    paths:
-      - "native/meeting-aec-helper/**"
-      - "scripts/build-meeting-aec-helper.js"
-      - "scripts/lib/meeting-aec-build.js"
-      - ".github/workflows/build-meeting-aec-helper.yml"
-    branches:
-      - main
+  # Automatic triggers temporarily disabled to conserve GitHub Actions minutes.
+  # Restore by uncommenting the push block below.
+  # push:
+  #   paths:
+  #     - "native/meeting-aec-helper/**"
+  #     - "scripts/build-meeting-aec-helper.js"
+  #     - "scripts/lib/meeting-aec-build.js"
+  #     - ".github/workflows/build-meeting-aec-helper.yml"
+  #   branches:
+  #     - main
   workflow_dispatch:
     inputs:
       version:

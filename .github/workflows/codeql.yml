@@ -1,12 +1,15 @@
 name: "CodeQL"
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  schedule:
-    - cron: "0 6 * * 1"
+  # Automatic triggers temporarily disabled to conserve GitHub Actions minutes.
+  # Restore by uncommenting the blocks below.
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [main]
+  # schedule:
+  #   - cron: "0 6 * * 1"
+  workflow_dispatch:
 
 jobs:
   analyze:
