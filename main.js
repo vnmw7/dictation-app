@@ -656,7 +656,7 @@ function resolveAuthUrl() {
     process.env.AUTH_URL ||
     process.env.VITE_AUTH_URL ||
     runtimeEnv.VITE_AUTH_URL ||
-    "https://auth.openwhispr.com"
+    ""
   );
 }
 
