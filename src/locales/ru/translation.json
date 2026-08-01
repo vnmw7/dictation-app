@@ -206,7 +206,10 @@
     "transcription": {
       "title": "Настройка транскрипции",
       "description": "Выберите режим и провайдера",
-      "preferredLanguage": "Предпочитаемый язык"
+      "preferredLanguage": "Предпочитаемый язык",
+      "smokeTestRestriction": "Для первоначальной настройки транскрипция использует локальный whisper.cpp. Облачные модели и модели NVIDIA можно настроить позже в Настройках.",
+      "availableAfterSetup": "Доступно после настройки",
+      "afterSetup": "После настройки"
     },
     "activation": {
       "title": "Настройка диктовки",

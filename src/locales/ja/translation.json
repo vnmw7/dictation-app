@@ -206,7 +206,10 @@
     "transcription": {
       "title": "文字起こし設定",
       "description": "モードとプロバイダーを選択してください",
-      "preferredLanguage": "優先言語"
+      "preferredLanguage": "優先言語",
+      "smokeTestRestriction": "初期セットアップでは、文字起こしはローカルの whisper.cpp を使用します。Cloud および NVIDIA モデルは後で設定で構成できます。",
+      "availableAfterSetup": "セットアップ後に利用可能",
+      "afterSetup": "セットアップ後"
     },
     "activation": {
       "title": "ディクテーション設定",

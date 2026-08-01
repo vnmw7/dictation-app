@@ -27,7 +27,7 @@ import { useDialogs } from "../hooks/useDialogs";
 import { usePermissions } from "../hooks/usePermissions";
 import { useClipboard } from "../hooks/useClipboard";
 import { useSystemAudioPermission } from "../hooks/useSystemAudioPermission";
-import { useSettings } from "../hooks/useSettings";
+import { useSettings, type TranscriptionSettings } from "../hooks/useSettings";
 import { useSettingsStore } from "../stores/settingsStore";
 import LanguageSelector from "./ui/LanguageSelector";
 import AuthenticationStep from "./AuthenticationStep";
@@ -51,6 +51,8 @@ import { getCachedPlatform, getPlatform } from "../utils/platform";
 import logger from "../utils/logger";
 import { ActivationModeSelector } from "./ui/ActivationModeSelector";
 import TranscriptionModelPicker from "./TranscriptionModelPicker";
+import onboardingTranscriptionPolicy from "../helpers/onboardingTranscriptionPolicy.cjs";
+const { getWhisperOnlyOnboardingPatch } = onboardingTranscriptionPolicy;
 import { ACCESSIBILITY_SKIPPED_KEY, areRequiredPermissionsMet } from "../utils/permissions";
 import UseCaseStep from "./onboarding/UseCaseStep";
 import MeetingSetupStep from "./onboarding/MeetingSetupStep";
@@ -281,6 +283,39 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
     checkStatus();
   }, [useLocalWhisper, whisperModel, parakeetModel, localTranscriptionProvider]);
+
+  // Restricted setup normalizes stale persisted transcription state to the
+  // local whisper.cpp-only policy. A user may resume onboarding with cloud
+  // or NVIDIA previously selected; the UI must not merely look restricted
+  // while the underlying settings still point elsewhere. This Effect only
+  // synchronizes when the guest setup screen is active, and is idempotent so
+  // React Strict Mode's double-invoke cannot churn state. Cloud/NVIDIA
+  // settings are intentionally preserved for use after onboarding.
+  useEffect(() => {
+    const isGuestSetup = currentStepId === "setup" && !(isSignedIn && !skipAuth);
+    if (!isGuestSetup) return;
+
+    const patch = getWhisperOnlyOnboardingPatch({
+      useLocalWhisper,
+      localTranscriptionProvider,
+      whisperModel,
+    });
+
+    if (Object.keys(patch).length > 0) {
+      // The helper is intentionally typed with loose strings to stay
+      // framework-agnostic; the store's transcription settings use a strict
+      // "whisper" | "nvidia" union, so we assert at this boundary.
+      updateTranscriptionSettings(patch as Partial<TranscriptionSettings>);
+    }
+  }, [
+    currentStepId,
+    isSignedIn,
+    skipAuth,
+    useLocalWhisper,
+    localTranscriptionProvider,
+    whisperModel,
+    updateTranscriptionSettings,
+  ]);
 
   // Auto-register default hotkey when entering the activation step
   const activationStepIndex = steps.findIndex((step) => step.id === "activation");
@@ -655,6 +690,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 updateTranscriptionSettings({ cloudTranscriptionBaseUrl: url })
               }
               variant="onboarding"
+              selectionPolicy="local-whisper-only"
             />
 
             {/* Language Selection - shown for both modes */}
