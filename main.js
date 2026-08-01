@@ -1171,7 +1171,10 @@ async function startApp() {
   trayManager.setCreateControlPanelCallback(() => windowManager.createControlPanelWindow());
   await trayManager.createTray();
 
-  updateManager.checkForUpdatesOnStartup();
+  // Auto-update polling disabled — disables the outbound connection to GitHub
+  // on startup (and the recurring 4h check). Re-enable by calling
+  // updateManager.checkForUpdatesOnStartup() once a release repo is configured.
+  // updateManager.checkForUpdatesOnStartup();
 
   if (process.platform === "darwin") {
     const { isGlobeLikeHotkey, isMouseButtonHotkey } = require("./src/helpers/hotkeyManager");
