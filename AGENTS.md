@@ -1,0 +1,1 @@
+focus on English Language only, don't edit all in @src\locales directory
