@@ -952,7 +952,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   allowOpenAIFallback: readBoolean("allowOpenAIFallback", false),
   allowLocalFallback: readBoolean("allowLocalFallback", false),
   fallbackWhisperModel: readString("fallbackWhisperModel", "base"),
-  preferredLanguage: readString("preferredLanguage", "auto"),
+  preferredLanguage: readString("preferredLanguage", "en-GB"),
   cloudTranscriptionProvider: readString("cloudTranscriptionProvider", "openai"),
   cloudTranscriptionModel: readString("cloudTranscriptionModel", "gpt-4o-mini-transcribe"),
   cloudTranscriptionBaseUrl: readString(
