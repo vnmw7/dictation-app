@@ -1,5 +1,5 @@
 #!/bin/bash
-# Post-remove script for OpenWhispr (deb)
+# Post-remove script for Dictation App (deb)
 # Best-effort: must never fail package removal, and must never run on upgrade.
 
 set -uo pipefail
