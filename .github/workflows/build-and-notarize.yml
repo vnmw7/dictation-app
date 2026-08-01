@@ -1,18 +1,20 @@
 name: Build and Notarize
 
 on:
-  push:
-    branches: [main, develop]
-    paths-ignore:
-      - "**.md"
-      - "LICENSE"
-      - ".github/ISSUE_TEMPLATE/**"
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - "**.md"
-      - "LICENSE"
-      - ".github/ISSUE_TEMPLATE/**"
+  # Automatic triggers temporarily disabled to conserve GitHub Actions minutes.
+  # Restore by uncommenting the blocks below and removing the workflow_dispatch-only line.
+  # push:
+  #   branches: [main, develop]
+  #   paths-ignore:
+  #     - "**.md"
+  #     - "LICENSE"
+  #     - ".github/ISSUE_TEMPLATE/**"
+  # pull_request:
+  #   branches: [main]
+  #   paths-ignore:
+  #     - "**.md"
+  #     - "LICENSE"
+  #     - ".github/ISSUE_TEMPLATE/**"
   workflow_dispatch:
 
 jobs:

@@ -1,12 +1,14 @@
 name: Build Linux Text Monitor
 
 on:
-  push:
-    paths:
-      - 'resources/linux-text-monitor.c'
-      - '.github/workflows/build-linux-text-monitor.yml'
-    branches:
-      - main
+  # Automatic triggers temporarily disabled to conserve GitHub Actions minutes.
+  # Restore by uncommenting the push block below.
+  # push:
+  #   paths:
+  #     - 'resources/linux-text-monitor.c'
+  #     - '.github/workflows/build-linux-text-monitor.yml'
+  #   branches:
+  #     - main
   workflow_dispatch:
     inputs:
       version:
