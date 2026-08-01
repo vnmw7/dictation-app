@@ -16,7 +16,7 @@
  */
 
 /** Default whisper.cpp model used when none is selected. */
-const DEFAULT_WHISPER_MODEL = "base";
+export const DEFAULT_WHISPER_MODEL = "base";
 
 /**
  * Settings relevant to the local-whisper-only policy.
@@ -39,7 +39,7 @@ const DEFAULT_WHISPER_MODEL = "base";
  * @param {WhisperOnlySettings} settings
  * @returns {Partial<WhisperOnlySettings>}
  */
-function getWhisperOnlyOnboardingPatch(settings) {
+export function getWhisperOnlyOnboardingPatch(settings) {
   const patch = {};
 
   if (!settings.useLocalWhisper) {
@@ -56,8 +56,3 @@ function getWhisperOnlyOnboardingPatch(settings) {
 
   return patch;
 }
-
-module.exports = {
-  DEFAULT_WHISPER_MODEL,
-  getWhisperOnlyOnboardingPatch,
-};
