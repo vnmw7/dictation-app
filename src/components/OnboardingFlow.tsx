@@ -135,7 +135,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     () => parseHotkeyList(dictationKey)[0] || getDefaultHotkey()
   );
   const [agentName, setAgentName] = useState("OpenWhispr");
-  const [skipAuth, setSkipAuth] = useState(false);
+  const [skipAuth, setSkipAuth] = useState(true);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
   const [isModelDownloaded, setIsModelDownloaded] = useState(false);
   const { isUsingNativeShortcut, isUsingHyprland, hyprlandConfigStatus, supportsPushToTalk } =
@@ -205,11 +205,14 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const showMeetingStep = false;
 
   const steps = useMemo(() => {
-    const list = [
-      { id: "welcome", title: t("onboarding.steps.welcome"), icon: UserCircle },
+    const list = [];
+    if (!skipAuth) {
+      list.push({ id: "welcome", title: t("onboarding.steps.welcome"), icon: UserCircle });
+    }
+    list.push(
       { id: "usecase", title: t("onboarding.steps.useCase"), icon: Sparkles },
-      { id: "setup", title: t("onboarding.steps.setup"), icon: Settings },
-    ];
+      { id: "setup", title: t("onboarding.steps.setup"), icon: Settings }
+    );
     if (!(isSignedIn && !skipAuth)) {
       list.push({ id: "permissions", title: t("onboarding.steps.permissions"), icon: Shield });
     }
