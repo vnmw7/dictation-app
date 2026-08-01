@@ -21,6 +21,7 @@ export interface TranscriptionSettings {
   cloudTranscriptionMode: string;
   transcriptionMode: InferenceMode;
   transcriptionProcessingMode: import("../types/electron").TranscriptionProcessingMode | "standard";
+  setTranscriptionProcessingMode: (mode: import("../types/electron").TranscriptionProcessingMode | "standard") => void;
   remoteTranscriptionType: SelfHostedType;
   remoteTranscriptionUrl: string;
   remoteTranscriptionModel: string;
@@ -243,6 +244,8 @@ function useSettingsInternal() {
     cloudTranscriptionMode: store.cloudTranscriptionMode,
     cleanupCloudMode: store.cleanupCloudMode,
     transcriptionMode: store.transcriptionMode,
+    transcriptionProcessingMode: store.transcriptionProcessingMode,
+    setTranscriptionProcessingMode: store.setTranscriptionProcessingMode,
     remoteTranscriptionType: store.remoteTranscriptionType,
     remoteTranscriptionUrl: store.remoteTranscriptionUrl,
     remoteTranscriptionModel: store.remoteTranscriptionModel,
