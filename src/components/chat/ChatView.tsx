@@ -10,6 +10,7 @@ import ConversationList from "./ConversationList";
 import EmptyChatState from "./EmptyChatState";
 import { ConfirmDialog } from "../ui/dialog";
 import { useDialogs } from "../../hooks/useDialogs";
+import { useSettingsStore } from "../../stores/settingsStore";
 import { getCachedPlatform } from "../../utils/platform";
 
 const CommandSearch = lazy(() => import("../CommandSearch"));
@@ -28,8 +29,20 @@ function NewChatEmptyState() {
   );
 }
 
+function VerbatimDisabledState() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center justify-center h-full select-none">
+      <p className="text-xs text-muted-foreground/50 text-center max-w-56">
+        {t("chat.verbatimDisabled")}
+      </p>
+    </div>
+  );
+}
+
 export default function ChatView() {
   const { t } = useTranslation();
+  const isVerbatimMode = useSettingsStore((s) => s.transcriptionProcessingMode) === "verbatim";
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [isNewChat, setIsNewChat] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -161,7 +174,9 @@ export default function ChatView() {
           />
         </div>
         <div className="flex-1 min-w-80 flex flex-col">
-          {hasActiveChat ? (
+          {isVerbatimMode ? (
+            <VerbatimDisabledState />
+          ) : hasActiveChat ? (
             <>
               <ChatMessages messages={persistence.messages} emptyState={<NewChatEmptyState />} />
               <ChatInput

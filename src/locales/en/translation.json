@@ -2351,7 +2351,8 @@
     "searchChats": "Search chats",
     "searchTitle": "Search conversations",
     "searchDescription": "Search across all your conversations",
-    "newChatEmpty": "Ask about your notes, transcripts, or anything else"
+    "newChatEmpty": "Ask about your notes, transcripts, or anything else",
+    "verbatimDisabled": "AI Chat is disabled while Verbatim mode is active."
   },
   "referral": {
     "title": "Refer and earn rewards",
