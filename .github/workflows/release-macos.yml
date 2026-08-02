@@ -137,8 +137,21 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
       - name: Verify packaged macOS native binaries
+        shell: bash
         run: |
-          APP_PATH=$(ls -d dist/mac*/OpenWhispr.app | head -n1)
+          set -euo pipefail
+
+          APP_PATH="$(find dist -maxdepth 3 -type d -name 'DictationApp.app' -print -quit)"
+
+          if [[ -z "$APP_PATH" ]]; then
+            echo "Packaged macOS application bundle was not found."
+            echo "Contents of dist:"
+            find dist -maxdepth 3 -print
+            exit 1
+          fi
+
+          echo "Verifying application bundle: $APP_PATH"
+
           for bin in macos-audio-tap macos-globe-listener macos-fast-paste macos-mic-listener macos-text-monitor macos-media-remote; do
             test -x "$APP_PATH/Contents/Resources/bin/$bin" || { echo "Missing in bundle: $bin"; exit 1; }
           done

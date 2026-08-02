@@ -1,9 +1,9 @@
 {
   "appId": "com.private.dictation-app",
   "afterPack": "scripts/afterPack.js",
-  "productName": "Dictation App",
+  "productName": "DictationApp",
   "protocols": {
-    "name": "Dictation App Protocol",
+    "name": "DictationApp Protocol",
     "schemes": ["openwhispr"]
   },
   "directories": {
@@ -157,9 +157,9 @@
     "extendInfo": {
       "LSUIElement": false,
       "CFBundleIconName": "openwhispr",
-      "NSMicrophoneUsageDescription": "Dictation App uses the microphone to capture your voice for transcription.",
-      "NSAudioCaptureUsageDescription": "Dictation App uses system audio to capture other participants' audio from calls and meetings.",
-      "NSAccessibilityUsageDescription": "Dictation App needs accessibility permissions to paste transcribed text into other applications."
+      "NSMicrophoneUsageDescription": "DictationApp uses the microphone to capture your voice for transcription.",
+      "NSAudioCaptureUsageDescription": "DictationApp uses system audio to capture other participants' audio from calls and meetings.",
+      "NSAccessibilityUsageDescription": "DictationApp needs accessibility permissions to paste transcribed text into other applications."
     }
   },
   "win": {
@@ -247,7 +247,7 @@
     "include": "resources/nsis/installer.nsh"
   },
   "dmg": {
-    "title": "Dictation App",
+    "title": "DictationApp",
     "icon": "src/assets/icon.icns",
     "window": {
       "width": 540,

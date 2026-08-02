@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="src/assets/logo.svg" alt="OpenWhispr" width="120" />
+  <img src="src/assets/logo.svg" alt="DictationApp" width="120" />
 </p>
 
-<h1 align="center">OpenWhispr</h1>
+<h1 align="center">DictationApp</h1>
 
 <p align="center">
   <a href="https://github.com/OpenWhispr/openwhispr/blob/main/LICENSE"><img src="https://img.shields.io/github/license/OpenWhispr/openwhispr?style=flat" alt="License" /></a>
@@ -27,7 +27,7 @@
 
 ---
 
-OpenWhispr turns your voice into text, notes, and actions from your desktop. Press a hotkey, speak, and your words appear at your cursor. Choose between fully private offline transcription with local speech-to-text engines like Whisper and NVIDIA Parakeet — where your audio never leaves your device — or cloud processing for speed. No data collection, no telemetry, fully open source.
+DictationApp turns your voice into text, notes, and actions from your desktop. Press a hotkey, speak, and your words appear at your cursor. Choose between fully private offline transcription with local speech-to-text engines like Whisper and NVIDIA Parakeet — where your audio never leaves your device — or cloud processing for speed. No data collection, no telemetry, fully open source.
 
 ## Download
 
@@ -97,7 +97,7 @@ React 19, TypeScript, Tailwind CSS v4, Electron 41, better-sqlite3, whisper.cpp,
   </a>
 </p>
 
-<p align="center"><a href="https://console.neon.tech/app/?promo=openwhispr">Neon</a> is the serverless Postgres platform powering OpenWhispr Cloud.</p>
+<p align="center"><a href="https://console.neon.tech/app/?promo=openwhispr">Neon</a> is the serverless Postgres platform powering DictationApp Cloud.</p>
 
 ## Contributing
 
@@ -118,4 +118,4 @@ We welcome contributions. Fork the repo, create a feature branch, and open a pul
 - **[Electron](https://www.electronjs.org/)** — cross-platform desktop framework
 - **[React](https://react.dev/)** — UI component library
 - **[shadcn/ui](https://ui.shadcn.com/)** — accessible components built on Radix primitives
-- **[Neon](https://console.neon.tech/app/?promo=openwhispr)** — serverless Postgres powering OpenWhispr Cloud
+- **[Neon](https://console.neon.tech/app/?promo=openwhispr)** — serverless Postgres powering DictationApp Cloud

@@ -237,8 +237,8 @@ if (!gotSingleInstanceLock) {
 const isLiveWindow = (window) => window && !window.isDestroyed();
 
 // Ensure macOS menus use the proper casing for the app name
-if (process.platform === "darwin" && app.getName() !== "Dictation App") {
-  app.setName("Dictation App");
+if (process.platform === "darwin" && app.getName() !== "DictationApp") {
+  app.setName("DictationApp");
 }
 
 // Add global error handling for uncaught exceptions
@@ -846,7 +846,7 @@ function startAuthBridgeServer() {
 
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(
-      "<html><body><h3>Dictation App sign-in complete.</h3><p>You can close this tab.</p></body></html>"
+      "<html><body><h3>DictationApp sign-in complete.</h3><p>You can close this tab.</p></body></html>"
     );
   });
 

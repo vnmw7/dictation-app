@@ -135,7 +135,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [hotkey, setHotkey] = useState(
     () => parseHotkeyList(dictationKey)[0] || getDefaultHotkey()
   );
-  const [agentName, setAgentName] = useState("OpenWhispr");
+  const [agentName, setAgentName] = useState("DictationApp");
   const [skipAuth, setSkipAuth] = useState(true);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
   const [isModelDownloaded, setIsModelDownloaded] = useState(false);
@@ -421,7 +421,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     void window.electronAPI?.markBundleMigrated?.();
 
     // Non-signed-in users in cloud mode default to BYOK to avoid
-    // "OpenWhispr Cloud requires sign-in" errors.
+    // "DictationApp Cloud requires sign-in" errors.
     if (!isSignedIn && !useLocalWhisper) {
       updateTranscriptionSettings({ cloudTranscriptionMode: "byok" });
     }
