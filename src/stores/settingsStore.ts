@@ -6,7 +6,7 @@ import { chooseDictionaryStartupAction } from "../helpers/dictionaryStartup";
 import { useStreamingProvidersStore } from "./streamingProvidersStore";
 import logger from "../utils/logger";
 import whisperVadConstants from "../constants/whisperVad.json";
-import type { LocalTranscriptionProvider, InferenceMode, SelfHostedType } from "../types/electron";
+import type { LocalTranscriptionProvider, InferenceMode, SelfHostedType, TranscriptionProcessingMode } from "../types/electron";
 import type { GoogleCalendarAccount } from "../types/calendar";
 import { PROMPT_KIND_LIST, type PromptKind } from "../config/prompts/registry";
 import {
@@ -226,8 +226,13 @@ function migrateProviderSettings() {
   const useLocal = localStorage.getItem("useLocalWhisper") === "true";
   const provider = localStorage.getItem("cloudTranscriptionProvider");
 
-  const transcriptionMode = deriveTranscriptionMode(useLocal, cloudMode, provider);
-  localStorage.setItem("transcriptionMode", transcriptionMode);
+  const transcriptionMode = (readString("transcriptionMode", "providers") ||
+    "providers") as InferenceMode;
+  const transcriptionProcessingMode = (readString("transcriptionProcessingMode", "standard") || "standard") as TranscriptionProcessingMode | "standard";
+
+  const isOldCloud = (transcriptionMode as string) === "cloud";
+  localStorage.setItem("transcriptionMode", isOldCloud ? "providers" : transcriptionMode);
+  localStorage.setItem("transcriptionProcessingMode", transcriptionProcessingMode);
 
   if (provider === "custom" && cloudMode === "byok") {
     localStorage.setItem("remoteTranscriptionType", "openai-compatible");
@@ -290,6 +295,7 @@ const UPLOAD_TRANSCRIPTION_PAIRS: ReadonlyArray<[string, string]> = [
   ["cloudTranscriptionBaseUrl", "uploadCloudTranscriptionBaseUrl"],
   ["cloudTranscriptionMode", "uploadCloudTranscriptionMode"],
   ["transcriptionMode", "uploadTranscriptionMode"],
+  ["transcriptionProcessingMode", "uploadTranscriptionProcessingMode"],
 ];
 
 function migrateUploadTranscription() {
@@ -452,6 +458,7 @@ export interface SettingsState
   noteFilesPath: string;
 
   transcriptionMode: InferenceMode;
+  transcriptionProcessingMode: TranscriptionProcessingMode | "standard";
   remoteTranscriptionType: SelfHostedType;
   remoteTranscriptionUrl: string;
   remoteTranscriptionModel: string;
@@ -459,6 +466,7 @@ export interface SettingsState
   cleanupRemoteUrl: string;
 
   meetingTranscriptionMode: InferenceMode;
+  meetingTranscriptionProcessingMode: TranscriptionProcessingMode | "standard";
   meetingUseLocalWhisper: boolean;
   meetingWhisperModel: string;
   meetingLocalTranscriptionProvider: LocalTranscriptionProvider;
@@ -471,6 +479,7 @@ export interface SettingsState
   meetingRemoteTranscriptionUrl: string;
 
   uploadTranscriptionMode: InferenceMode;
+  uploadTranscriptionProcessingMode: TranscriptionProcessingMode | "standard";
   uploadUseLocalWhisper: boolean;
   uploadWhisperModel: string;
   uploadLocalTranscriptionProvider: LocalTranscriptionProvider;
@@ -526,6 +535,7 @@ export interface SettingsState
   setDictationAgentCustomApiKey: (key: string) => void;
 
   setTranscriptionMode: (mode: InferenceMode) => void;
+  setTranscriptionProcessingMode: (mode: TranscriptionProcessingMode | "standard") => void;
   setRemoteTranscriptionType: (type: SelfHostedType) => void;
   setRemoteTranscriptionUrl: (url: string) => void;
   setRemoteTranscriptionModel: (model: string) => void;
@@ -533,6 +543,7 @@ export interface SettingsState
   setCleanupRemoteUrl: (url: string) => void;
 
   setMeetingTranscriptionMode: (mode: InferenceMode) => void;
+  setMeetingTranscriptionProcessingMode: (mode: TranscriptionProcessingMode | "standard") => void;
   setMeetingUseLocalWhisper: (value: boolean) => void;
   setMeetingWhisperModel: (value: string) => void;
   setMeetingLocalTranscriptionProvider: (value: LocalTranscriptionProvider) => void;
@@ -545,6 +556,7 @@ export interface SettingsState
   setMeetingRemoteTranscriptionUrl: (url: string) => void;
 
   setUploadTranscriptionMode: (mode: InferenceMode) => void;
+  setUploadTranscriptionProcessingMode: (mode: TranscriptionProcessingMode | "standard") => void;
   setUploadUseLocalWhisper: (value: boolean) => void;
   setUploadWhisperModel: (value: string) => void;
   setUploadLocalTranscriptionProvider: (value: LocalTranscriptionProvider) => void;
@@ -940,7 +952,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   allowOpenAIFallback: readBoolean("allowOpenAIFallback", false),
   allowLocalFallback: readBoolean("allowLocalFallback", false),
   fallbackWhisperModel: readString("fallbackWhisperModel", "base"),
-  preferredLanguage: readString("preferredLanguage", "auto"),
+  preferredLanguage: readString("preferredLanguage", "en-GB"),
   cloudTranscriptionProvider: readString("cloudTranscriptionProvider", "openai"),
   cloudTranscriptionModel: readString("cloudTranscriptionModel", "gpt-4o-mini-transcribe"),
   cloudTranscriptionBaseUrl: readString(
@@ -1093,6 +1105,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (v === "openwhispr" || v === "providers" || v === "local" || v === "self-hosted") return v;
     return "openwhispr" as InferenceMode;
   })(),
+  transcriptionProcessingMode: (readString("transcriptionProcessingMode", "standard") || "standard") as TranscriptionProcessingMode | "standard",
   remoteTranscriptionType: (() => {
     const v = readString("remoteTranscriptionType", "lan");
     return v === "openai-compatible" ? "openai-compatible" : ("lan" as SelfHostedType);
@@ -1118,6 +1131,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (v === "openwhispr" || v === "providers" || v === "local" || v === "self-hosted") return v;
     return "openwhispr" as InferenceMode;
   })(),
+  meetingTranscriptionProcessingMode: (readString("meetingTranscriptionProcessingMode", "standard") || "standard") as TranscriptionProcessingMode | "standard",
   meetingUseLocalWhisper: readBoolean("meetingUseLocalWhisper", false),
   meetingWhisperModel: readString("meetingWhisperModel", ""),
   meetingLocalTranscriptionProvider: (readString("meetingLocalTranscriptionProvider", "whisper") ===
@@ -1140,6 +1154,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (v === "openwhispr" || v === "providers" || v === "local" || v === "self-hosted") return v;
     return "openwhispr" as InferenceMode;
   })(),
+  uploadTranscriptionProcessingMode: (readString("uploadTranscriptionProcessingMode", "standard") || "standard") as TranscriptionProcessingMode | "standard",
   uploadUseLocalWhisper: readBoolean("uploadUseLocalWhisper", false),
   uploadWhisperModel: readString("uploadWhisperModel", ""),
   uploadLocalTranscriptionProvider: (readString("uploadLocalTranscriptionProvider", "whisper") ===
@@ -1202,6 +1217,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   })(),
 
   setTranscriptionMode: createStringSetter("transcriptionMode") as (mode: InferenceMode) => void,
+  setTranscriptionProcessingMode: createStringSetter("transcriptionProcessingMode") as (mode: TranscriptionProcessingMode | "standard") => void,
   setRemoteTranscriptionType: createStringSetter("remoteTranscriptionType") as (
     type: SelfHostedType
   ) => void,
@@ -1213,6 +1229,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   setMeetingTranscriptionMode: createStringSetter("meetingTranscriptionMode") as (
     mode: InferenceMode
   ) => void,
+  setMeetingTranscriptionProcessingMode: createStringSetter("meetingTranscriptionProcessingMode") as (mode: TranscriptionProcessingMode | "standard") => void,
   setMeetingUseLocalWhisper: createBooleanSetter("meetingUseLocalWhisper"),
   setMeetingWhisperModel: createStringSetter("meetingWhisperModel"),
   setMeetingLocalTranscriptionProvider: (value: LocalTranscriptionProvider) => {
@@ -1232,6 +1249,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   setUploadTranscriptionMode: createStringSetter("uploadTranscriptionMode") as (
     mode: InferenceMode
   ) => void,
+  setUploadTranscriptionProcessingMode: createStringSetter("uploadTranscriptionProcessingMode") as (mode: TranscriptionProcessingMode | "standard") => void,
   setUploadUseLocalWhisper: createBooleanSetter("uploadUseLocalWhisper"),
   setUploadWhisperModel: createStringSetter("uploadWhisperModel"),
   setUploadLocalTranscriptionProvider: (value: LocalTranscriptionProvider) => {
@@ -1984,6 +2002,7 @@ export interface ResolvedMeetingTranscription {
   cloudTranscriptionBaseUrl: string;
   cloudTranscriptionMode: string;
   transcriptionMode: InferenceMode;
+  transcriptionProcessingMode: TranscriptionProcessingMode | "standard";
   remoteTranscriptionType: SelfHostedType;
   remoteTranscriptionUrl: string;
 }
@@ -2007,6 +2026,7 @@ export const selectResolvedMeetingTranscription = (
       state.meetingCloudTranscriptionBaseUrl || state.cloudTranscriptionBaseUrl || "",
     cloudTranscriptionMode: state.meetingCloudTranscriptionMode || state.cloudTranscriptionMode,
     transcriptionMode: state.meetingTranscriptionMode,
+    transcriptionProcessingMode: state.meetingTranscriptionProcessingMode,
     remoteTranscriptionType: state.meetingRemoteTranscriptionType,
     remoteTranscriptionUrl: state.meetingRemoteTranscriptionUrl || state.remoteTranscriptionUrl,
   };

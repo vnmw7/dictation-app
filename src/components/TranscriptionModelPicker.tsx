@@ -5,7 +5,7 @@ import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Download, Trash2, Cloud, Lock, X, Zap, Check } from "lucide-react";
 import { ProviderIcon } from "./ui/ProviderIcon";
-import { ProviderTabs } from "./ui/ProviderTabs";
+import { ProviderTabs, type ProviderTabItem } from "./ui/ProviderTabs";
 import ModelCardList from "./ui/ModelCardList";
 import { DownloadProgressBar } from "./ui/DownloadProgressBar";
 import ApiKeyInput from "./ui/ApiKeyInput";
@@ -182,6 +182,17 @@ function LocalModelCard({
   );
 }
 
+/**
+ * Restricts which transcription options are selectable in the picker.
+ *
+ * - `"all"` (default): the full cloud/local + provider surface is available.
+ *   Used by Settings so production capability is never weakened.
+ * - `"local-whisper-only"`: forces local mode and disables cloud and NVIDIA.
+ *   Used by onboarding to keep the first smoke test narrow and deterministic.
+ *   Kept separate from `variant` so styling never implies policy.
+ */
+type TranscriptionSelectionPolicy = "all" | "local-whisper-only";
+
 interface TranscriptionModelPickerProps {
   selectedCloudProvider: string;
   onCloudProviderSelect: (providerId: string) => void;
@@ -199,6 +210,7 @@ interface TranscriptionModelPickerProps {
   variant?: "onboarding" | "settings";
   mode?: "cloud" | "local";
   streamingOnly?: boolean;
+  selectionPolicy?: TranscriptionSelectionPolicy;
 }
 
 const CLOUD_PROVIDER_TABS = [
@@ -280,7 +292,7 @@ const VALID_CLOUD_PROVIDER_IDS = CLOUD_PROVIDER_TABS.map((p) => p.id);
 
 const TINFOIL_AUDIO_DOCS_URL = "https://docs.tinfoil.sh/models/audio";
 
-const LOCAL_PROVIDER_TABS: Array<{ id: string; name: string; disabled?: boolean }> = [
+const LOCAL_PROVIDER_TABS: ProviderTabItem[] = [
   { id: "whisper", name: "OpenAI" },
   { id: "nvidia", name: "NVIDIA" },
 ];
@@ -288,9 +300,18 @@ const LOCAL_PROVIDER_TABS: Array<{ id: string; name: string; disabled?: boolean 
 interface ModeToggleProps {
   useLocalWhisper: boolean;
   onModeChange: (useLocal: boolean) => void;
+  /** When true, the Cloud option stays visible but cannot be activated. */
+  cloudDisabled?: boolean;
+  /** Hover/aria explanation shown while the Cloud option is disabled. */
+  cloudDisabledReason?: string;
 }
 
-function ModeToggle({ useLocalWhisper, onModeChange }: ModeToggleProps) {
+function ModeToggle({
+  useLocalWhisper,
+  onModeChange,
+  cloudDisabled = false,
+  cloudDisabledReason,
+}: ModeToggleProps) {
   const { t } = useTranslation();
   return (
     <div className="relative flex p-0.5 rounded-lg bg-surface-1/80 backdrop-blur-xl dark:bg-surface-1 border border-border/60 dark:border-white/8 shadow-(--shadow-metallic-light) dark:shadow-(--shadow-metallic-dark)">
@@ -300,15 +321,27 @@ function ModeToggle({ useLocalWhisper, onModeChange }: ModeToggleProps) {
         }`}
       />
       <button
-        onClick={() => onModeChange(false)}
+        type="button"
+        disabled={cloudDisabled}
+        aria-disabled={cloudDisabled}
+        title={cloudDisabled ? cloudDisabledReason : undefined}
+        onClick={() => {
+          if (cloudDisabled) return;
+          onModeChange(false);
+        }}
         className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md transition-colors duration-150 ${
-          !useLocalWhisper ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+          cloudDisabled
+            ? "text-muted-foreground/50 cursor-not-allowed"
+            : !useLocalWhisper
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
         }`}
       >
         <Cloud className="w-3.5 h-3.5" />
         <span className="text-xs font-medium">{t("common.cloud")}</span>
       </button>
       <button
+        type="button"
         onClick={() => onModeChange(true)}
         className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md transition-colors duration-150 ${
           useLocalWhisper ? "text-foreground" : "text-muted-foreground hover:text-foreground"
@@ -338,6 +371,7 @@ export default function TranscriptionModelPicker({
   variant = "settings",
   mode,
   streamingOnly = false,
+  selectionPolicy = "all",
 }: TranscriptionModelPickerProps) {
   const { t } = useTranslation();
   const openaiApiKey = useSettingsStore((s) => s.openaiApiKey);
@@ -360,7 +394,37 @@ export default function TranscriptionModelPicker({
   const setTinfoilApiKey = useSettingsStore((s) => s.setTinfoilApiKey);
   const customTranscriptionApiKey = useSettingsStore((s) => s.customTranscriptionApiKey);
   const setCustomTranscriptionApiKey = useSettingsStore((s) => s.setCustomTranscriptionApiKey);
-  const effectiveLocal = mode === "local" ? true : mode === "cloud" ? false : useLocalWhisper;
+  const isWhisperOnly = selectionPolicy === "local-whisper-only";
+  // Restricted onboarding must never render cloud config, even when persisted
+  // settings previously selected cloud mode. Policy wins over mode/useLocalWhisper.
+  const effectiveLocal = isWhisperOnly
+    ? true
+    : mode === "local"
+      ? true
+      : mode === "cloud"
+        ? false
+        : useLocalWhisper;
+
+  // NVIDIA (sherpa-onnx/ONNX) is disabled but kept visible during restricted
+  // setup so users know it exists and can be configured later in Settings.
+  const localProviderTabs = useMemo<ProviderTabItem[]>(
+    () =>
+      LOCAL_PROVIDER_TABS.map((provider) =>
+        isWhisperOnly && provider.id === "nvidia"
+          ? {
+              ...provider,
+              disabled: true,
+              disabledLabel: t("onboarding.transcription.afterSetup"),
+            }
+          : provider
+      ),
+    [isWhisperOnly, t]
+  );
+
+  // Optional GPU acceleration introduces another download and backend choice;
+  // hide it during restricted setup for a deterministic first smoke test.
+  // This does not disable NVIDIA hardware globally — only the onboarding prompt.
+  const allowOptionalGpuSetup = !isWhisperOnly;
   const [localModels, setLocalModels] = useState<LocalModel[]>([]);
   const [parakeetModels, setParakeetModels] = useState<LocalModel[]>([]);
   const [internalLocalProvider, setInternalLocalProvider] = useState(selectedLocalProvider);
@@ -539,7 +603,7 @@ export default function TranscriptionModelPicker({
   }, [loadLocalModels, loadParakeetModels]);
 
   useEffect(() => {
-    if (!effectiveLocal || internalLocalProvider !== "whisper") return;
+    if (!allowOptionalGpuSetup || !effectiveLocal || internalLocalProvider !== "whisper") return;
     if (getCachedPlatform() === "darwin") return;
     const detect = async () => {
       try {
@@ -557,7 +621,7 @@ export default function TranscriptionModelPicker({
       } catch {}
     };
     detect();
-  }, [effectiveLocal, internalLocalProvider]);
+  }, [allowOptionalGpuSetup, effectiveLocal, internalLocalProvider]);
 
   useEffect(() => {
     if (!gpuDownloading || !gpuBackend) return;
@@ -625,10 +689,14 @@ export default function TranscriptionModelPicker({
 
   const handleModeChange = useCallback(
     (isLocal: boolean) => {
+      // Defense-in-depth: the ModeToggle also disables Cloud, but a programmatic
+      // or keyboard path must not be able to leave the restricted local policy.
+      if (isWhisperOnly && !isLocal) return;
+
       onModeChange(isLocal);
       if (!isLocal) ensureValidCloudSelection();
     },
-    [onModeChange, ensureValidCloudSelection]
+    [isWhisperOnly, onModeChange, ensureValidCloudSelection]
   );
 
   const handleCloudProviderChange = useCallback(
@@ -653,12 +721,16 @@ export default function TranscriptionModelPicker({
 
   const handleLocalProviderChange = useCallback(
     (providerId: string) => {
-      const tab = LOCAL_PROVIDER_TABS.find((t) => t.id === providerId);
+      // Explicit policy guard protects against programmatic calls, keyboard
+      // interaction bugs, and future refactors that could bypass UI disabling.
+      if (isWhisperOnly && providerId !== "whisper") return;
+
+      const tab = localProviderTabs.find((item) => item.id === providerId);
       if (tab?.disabled) return;
       setInternalLocalProvider(providerId);
       onLocalProviderSelect?.(providerId);
     },
-    [onLocalProviderSelect]
+    [isWhisperOnly, localProviderTabs, onLocalProviderSelect]
   );
 
   const handleWhisperModelSelect = useCallback(
@@ -942,7 +1014,14 @@ export default function TranscriptionModelPicker({
 
   return (
     <div className={`space-y-2 ${className}`}>
-      {!mode && <ModeToggle useLocalWhisper={effectiveLocal} onModeChange={handleModeChange} />}
+      {!mode && (
+        <ModeToggle
+          useLocalWhisper={effectiveLocal}
+          onModeChange={handleModeChange}
+          cloudDisabled={isWhisperOnly}
+          cloudDisabledReason={t("onboarding.transcription.availableAfterSetup")}
+        />
+      )}
 
       {!effectiveLocal ? (
         <>
@@ -1071,29 +1150,38 @@ export default function TranscriptionModelPicker({
       ) : (
         <>
           <ProviderTabs
-            providers={LOCAL_PROVIDER_TABS}
+            providers={localProviderTabs}
             selectedId={internalLocalProvider}
             onSelect={handleLocalProviderChange}
             colorScheme="purple"
           />
 
-          {progressDisplay}
-
-          {gpuDownloading && internalLocalProvider === "whisper" && (
-            <div>
-              <DownloadProgressBar modelName="GPU acceleration" progress={gpuProgress} />
-              <div className="px-2.5 pb-1 flex justify-end">
-                <button
-                  onClick={handleGpuCancel}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {t("gpu.cancel")}
-                </button>
-              </div>
-            </div>
+          {isWhisperOnly && (
+            <p className="text-xs text-muted-foreground/70 px-1">
+              {t("onboarding.transcription.smokeTestRestriction")}
+            </p>
           )}
 
-          {internalLocalProvider === "whisper" &&
+          {progressDisplay}
+
+          {allowOptionalGpuSetup &&
+            gpuDownloading &&
+            internalLocalProvider === "whisper" && (
+              <div>
+                <DownloadProgressBar modelName="GPU acceleration" progress={gpuProgress} />
+                <div className="px-2.5 pb-1 flex justify-end">
+                  <button
+                    onClick={handleGpuCancel}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {t("gpu.cancel")}
+                  </button>
+                </div>
+              </div>
+            )}
+
+          {allowOptionalGpuSetup &&
+            internalLocalProvider === "whisper" &&
             !gpuDismissed &&
             !gpuDownloading &&
             gpuBackend && (

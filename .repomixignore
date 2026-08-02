@@ -1,0 +1,16 @@
+.github
+.kilo
+agent-skills
+docs
+examples
+native
+nix
+node_modules
+resources
+build
+dist
+release
+dist-electron
+*.svg
+*.png 
+src/locales

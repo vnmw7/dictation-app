@@ -1,0 +1,158 @@
+name: Build Unsigned Artifacts (macOS)
+
+on:
+  # Automatic triggers temporarily disabled to conserve GitHub Actions minutes.
+  # Restore by uncommenting the blocks below and removing the workflow_dispatch-only line.
+  # push:
+  #   branches: [main, develop]
+  #   paths-ignore:
+  #     - "**.md"
+  #     - "LICENSE"
+  #     - ".github/ISSUE_TEMPLATE/**"
+  # pull_request:
+  #   branches: [main]
+  #   paths-ignore:
+  #     - "**.md"
+  #     - "LICENSE"
+  #     - ".github/ISSUE_TEMPLATE/**"
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Build better-sqlite3 for the runner's node
+        # --ignore-scripts skips the native build; DB-backed tests silently
+        # skip without it. This job is the only test gate on push to main.
+        run: npm rebuild better-sqlite3
+      - name: Run tests
+        run: npm test
+        env:
+          # keeps require("electron") from throwing when postinstall was skipped
+          ELECTRON_OVERRIDE_DIST_PATH: /tmp
+
+  build-macos:
+    needs: tests
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install ffmpeg-static for target architecture
+        if: matrix.arch == 'x64'
+        run: |
+          rm -f node_modules/ffmpeg-static/ffmpeg
+          npm_config_arch=x64 node node_modules/ffmpeg-static/install.js
+
+      - name: Cache native binaries
+        id: cache-bin
+        uses: actions/cache@v4
+        with:
+          path: resources/bin
+          key: macos-${{ matrix.arch }}-bin-${{ hashFiles('scripts/download-*.js', 'scripts/build-globe-listener.js', 'resources/macos-globe-listener.swift', 'scripts/build-macos-fast-paste.js', 'resources/macos-fast-paste.swift', 'scripts/build-media-remote.js', 'resources/macos-media-remote.swift', 'scripts/build-macos-audio-tap.js', 'resources/macos-audio-tap.swift') }}
+
+      - name: Compile macos-globe-listener binary
+        if: steps.cache-bin.outputs.cache-hit != 'true'
+        run: npm run compile:globe -- --arch ${{ matrix.arch }}
+
+      - name: Compile macos-fast-paste binary
+        if: steps.cache-bin.outputs.cache-hit != 'true'
+        run: npm run compile:fast-paste -- --arch ${{ matrix.arch }}
+
+      - name: Compile macos-media-remote binary
+        if: steps.cache-bin.outputs.cache-hit != 'true'
+        run: npm run compile:media-remote -- --arch ${{ matrix.arch }}
+
+      - name: Compile macos-audio-tap binary
+        if: steps.cache-bin.outputs.cache-hit != 'true'
+        run: npm run compile:audio-tap -- --arch ${{ matrix.arch }}
+
+      - name: Download whisper.cpp binaries
+        if: steps.cache-bin.outputs.cache-hit != 'true'
+        run: node scripts/download-whisper-cpp.js --current --platform darwin --arch ${{ matrix.arch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+
+      - name: Download llama-server binaries
+        if: steps.cache-bin.outputs.cache-hit != 'true'
+        run: node scripts/download-llama-server.js --current --platform darwin --arch ${{ matrix.arch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+
+      - name: Download sherpa-onnx binaries
+        if: steps.cache-bin.outputs.cache-hit != 'true'
+        run: node scripts/download-sherpa-onnx.js --current --platform darwin --arch ${{ matrix.arch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+
+      - name: Download yt-dlp binary
+        if: steps.cache-bin.outputs.cache-hit != 'true'
+        run: node scripts/download-yt-dlp.js --current --platform darwin --arch ${{ matrix.arch }}
+
+      - name: Download Qdrant binary
+        if: steps.cache-bin.outputs.cache-hit != 'true'
+        run: node scripts/download-qdrant.js --current --platform darwin --arch ${{ matrix.arch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+
+      - name: Download meeting AEC helper
+        if: steps.cache-bin.outputs.cache-hit != 'true'
+        run: node scripts/download-meeting-aec-helper.js --current --platform darwin --arch ${{ matrix.arch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+
+      - name: Cache Electron
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/electron
+          key: macos-${{ matrix.arch }}-electron-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: macos-${{ matrix.arch }}-electron-
+
+      - name: Create runtime env
+        run: |
+          echo "GOOGLE_CALENDAR_CLIENT_ID=${{ secrets.GOOGLE_CALENDAR_CLIENT_ID }}" >> .env
+          echo "GOOGLE_CALENDAR_CLIENT_SECRET=${{ secrets.GOOGLE_CALENDAR_CLIENT_SECRET }}" >> .env
+
+      - name: Build Application (${{ matrix.arch }})
+        run: npm run build:mac -- --${{ matrix.arch }} --publish never
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+          VITE_NEON_AUTH_URL: ${{ vars.VITE_NEON_AUTH_URL }}
+          VITE_OPENWHISPR_API_URL: ${{ vars.VITE_OPENWHISPR_API_URL }}
+          VITE_OPENWHISPR_OAUTH_CALLBACK_URL: ${{ vars.VITE_OPENWHISPR_OAUTH_CALLBACK_URL }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Verify packaged macOS native binaries
+        run: |
+          APP_PATH=$(ls -d dist/mac*/OpenWhispr.app | head -n1)
+          for bin in macos-audio-tap macos-globe-listener macos-fast-paste macos-mic-listener macos-text-monitor macos-media-remote; do
+            test -x "$APP_PATH/Contents/Resources/bin/$bin" || { echo "Missing in bundle: $bin"; exit 1; }
+          done
+          test -x "$APP_PATH/Contents/Resources/bin/MediaRemoteAdapter.framework/Versions/A/MediaRemoteAdapter" || { echo "Missing in bundle: MediaRemoteAdapter.framework"; exit 1; }
+          test -f "$APP_PATH/Contents/Resources/bin/mediaremote-adapter.pl" || { echo "Missing in bundle: mediaremote-adapter.pl"; exit 1; }
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}-build
+          path: dist/
+          retention-days: 7

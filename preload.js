@@ -831,6 +831,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getTranslationKey: () => ipcRenderer.invoke("get-translation-key"),
   getAgentKey: () => ipcRenderer.invoke("get-agent-key"),
   saveAgentKey: (key) => ipcRenderer.invoke("save-agent-key", key),
+  
+  // API Keys & Config
+  getOpenaiKey: () => ipcRenderer.invoke("get-openai-key"),
+  saveOpenaiKey: (key) => ipcRenderer.invoke("save-openai-key", key),
+  getTranscriptionProcessingMode: () => ipcRenderer.invoke("get-transcription-processing-mode"),
+  saveTranscriptionProcessingMode: (mode) => ipcRenderer.invoke("save-transcription-processing-mode", mode),
+
   onAgentStartRecording: registerListener("agent-start-recording", (callback) => () => callback()),
   onAgentStopRecording: registerListener("agent-stop-recording", (callback) => () => callback()),
   onAgentToggleRecording: registerListener(

@@ -15,6 +15,7 @@ import {
   getActionName,
   getActionDescription,
 } from "../../stores/actionStore";
+import { useSettingsStore } from "../../stores/settingsStore";
 import type { ActionItem } from "../../types/electron";
 
 interface ActionPickerProps {
@@ -30,6 +31,7 @@ export default function ActionPicker({
 }: ActionPickerProps) {
   const { t } = useTranslation();
   const actions = useActions();
+  const transcriptionProcessingMode = useSettingsStore((s) => s.transcriptionProcessingMode);
   const [lastUsedId, setLastUsedId] = useState<number | null>(() => {
     const stored = localStorage.getItem("lastUsedActionId");
     return stored ? Number(stored) : null;
@@ -38,6 +40,10 @@ export default function ActionPicker({
   useEffect(() => {
     initializeActions();
   }, []);
+
+  // Verbatim mode disables all AI processing — hide AI actions entirely so they
+  // can't be triggered from the UI. Enforced again in the main process (IPC).
+  if (transcriptionProcessingMode === "verbatim") return null;
 
   const activeAction = actions.find((a) => a.id === lastUsedId) ?? actions[0] ?? null;
 

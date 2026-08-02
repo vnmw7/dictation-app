@@ -206,7 +206,10 @@
     "transcription": {
       "title": "Transkriptions-Einrichtung",
       "description": "Wählen Sie Modus und Anbieter",
-      "preferredLanguage": "Bevorzugte Sprache"
+      "preferredLanguage": "Bevorzugte Sprache",
+      "smokeTestRestriction": "Für die Ersteinrichtung verwendet die Transkription lokales whisper.cpp. Cloud- und NVIDIA-Modelle können später in den Einstellungen konfiguriert werden.",
+      "availableAfterSetup": "Nach der Einrichtung verfügbar",
+      "afterSetup": "Nach der Einrichtung"
     },
     "activation": {
       "title": "Diktat-Einrichtung",

@@ -9,6 +9,8 @@ export type SelfHostedType = "openai-compatible" | "lan";
 
 export type TranscriptionStatus = "completed" | "failed" | "pending" | "discarded";
 
+export type TranscriptionProcessingMode = "verbatim";
+
 export type TranscriptionErrorCode =
   | "TIMEOUT"
   | "NETWORK"

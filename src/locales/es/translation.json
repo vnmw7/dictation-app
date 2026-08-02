@@ -206,7 +206,10 @@
     "transcription": {
       "title": "Configuración de transcripción",
       "description": "Elige tu modo y proveedor",
-      "preferredLanguage": "Idioma preferido"
+      "preferredLanguage": "Idioma preferido",
+      "smokeTestRestriction": "Para la configuración inicial, la transcripción usa whisper.cpp local. Los modelos Cloud y NVIDIA se pueden configurar más adelante en Ajustes.",
+      "availableAfterSetup": "Disponible tras la configuración",
+      "afterSetup": "Tras la configuración"
     },
     "activation": {
       "title": "Configuración de dictado",

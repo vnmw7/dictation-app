@@ -206,7 +206,10 @@
     "transcription": {
       "title": "轉錄設定",
       "description": "選擇模式和服務供應商",
-      "preferredLanguage": "偏好語言"
+      "preferredLanguage": "偏好語言",
+      "smokeTestRestriction": "在初始設定期間，轉錄使用本地 whisper.cpp。雲端和 NVIDIA 模型可在稍後的「設定」中配置。",
+      "availableAfterSetup": "設定後可用",
+      "afterSetup": "設定後"
     },
     "activation": {
       "title": "聽寫設定",
